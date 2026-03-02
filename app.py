@@ -5,6 +5,8 @@ Upload trade CSVs, filter bad trades, simulate martingale strategies, see projec
 
 import os
 import io
+import uuid
+import tempfile
 import pandas as pd
 import numpy as np
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify, flash
@@ -16,6 +18,24 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-me')
 
 # Password from environment variable
 APP_PASSWORD = os.environ.get('ANALYZER_PASSWORD', 'kalshi2024')
+
+# Upload storage - use temp directory
+UPLOAD_DIR = os.path.join(tempfile.gettempdir(), 'kalshi_analyzer_uploads')
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+def get_upload_path(file_id):
+    """Get path for uploaded file"""
+    return os.path.join(UPLOAD_DIR, f'{file_id}.csv')
+
+def load_trades_df():
+    """Load trades dataframe from stored file"""
+    file_id = session.get('file_id')
+    if not file_id:
+        return None
+    filepath = get_upload_path(file_id)
+    if not os.path.exists(filepath):
+        return None
+    return pd.read_csv(filepath)
 
 # =============================================================================
 # AUTH
@@ -221,10 +241,16 @@ def upload():
         return redirect(url_for('index'))
 
     try:
-        df = pd.read_csv(file)
+        # Generate unique ID and save to disk
+        file_id = str(uuid.uuid4())
+        filepath = get_upload_path(file_id)
+        file.save(filepath)
 
-        # Store in session (as JSON for simplicity)
-        session['trades_data'] = df.to_json()
+        # Verify it's valid CSV
+        df = pd.read_csv(filepath)
+
+        # Store only the file ID in session (small!)
+        session['file_id'] = file_id
         session['filename'] = file.filename
 
         flash(f'Loaded {len(df)} trades from {file.filename}', 'success')
@@ -236,11 +262,10 @@ def upload():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    if 'trades_data' not in session:
+    df = load_trades_df()
+    if df is None:
         flash('Please upload a CSV first', 'error')
         return redirect(url_for('index'))
-
-    df = pd.read_json(session['trades_data'])
     bots = get_bots_from_df(df)
 
     # Get settings from query params or defaults
@@ -298,11 +323,10 @@ def dashboard():
 @app.route('/bot/<bot_id>')
 @login_required
 def bot_detail(bot_id):
-    if 'trades_data' not in session:
+    df = load_trades_df()
+    if df is None:
         flash('Please upload a CSV first', 'error')
         return redirect(url_for('index'))
-
-    df = pd.read_json(session['trades_data'])
 
     # Get settings
     settings = {
@@ -359,10 +383,9 @@ def bot_detail(bot_id):
 @app.route('/download/all')
 @login_required
 def download_all():
-    if 'trades_data' not in session:
+    df = load_trades_df()
+    if df is None:
         return "No data", 400
-
-    df = pd.read_json(session['trades_data'])
     max_entry = int(request.args.get('max_entry', 90))
     filtered_df = filter_unprofitable_trades(df, max_entry)
 
@@ -380,10 +403,9 @@ def download_all():
 @app.route('/download/bot/<bot_id>')
 @login_required
 def download_bot(bot_id):
-    if 'trades_data' not in session:
+    df = load_trades_df()
+    if df is None:
         return "No data", 400
-
-    df = pd.read_json(session['trades_data'])
     max_entry = int(request.args.get('max_entry', 90))
 
     bot_df = df[df['Bot ID'] == bot_id].copy()
@@ -404,11 +426,10 @@ def download_bot(bot_id):
 @login_required
 def projections():
     """Show weekly/monthly/yearly projections based on current data"""
-    if 'trades_data' not in session:
+    df = load_trades_df()
+    if df is None:
         flash('Please upload a CSV first', 'error')
         return redirect(url_for('index'))
-
-    df = pd.read_json(session['trades_data'])
 
     settings = {
         'max_entry_price': int(request.args.get('max_entry', 90)),
