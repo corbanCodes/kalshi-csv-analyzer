@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload - Kalshi Analyzer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 40px;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        h1 { font-size: 28px; }
+        .logout {
+            color: #888;
+            text-decoration: none;
+        }
+        .logout:hover { color: #fff; }
+        .upload-box {
+            background: rgba(255,255,255,0.05);
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 60px;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+        .upload-box:hover {
+            border-color: #4ade80;
+        }
+        .upload-box h2 {
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+        .upload-box p {
+            color: #888;
+            margin-bottom: 24px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: #000;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .file-label:hover {
+            transform: translateY(-2px);
+        }
+        .selected-file {
+            margin-top: 16px;
+            color: #4ade80;
+        }
+        button[type="submit"] {
+            margin-top: 24px;
+            padding: 16px 48px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+        }
+        button[type="submit"].show {
+            display: inline-block;
+        }
+        .flash {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        .flash.success {
+            background: rgba(74, 222, 128, 0.2);
+            border: 1px solid #4ade80;
+            color: #4ade80;
+        }
+        .flash.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+        .info-box {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 40px;
+        }
+        .info-box h3 {
+            margin-bottom: 16px;
+            color: #4ade80;
+        }
+        .info-box ul {
+            list-style: none;
+            color: #aaa;
+        }
+        .info-box li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+        .info-box li:before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Kalshi CSV Analyzer</h1>
+            <a href="/logout" class="logout">Logout</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form action="/upload" method="POST" enctype="multipart/form-data" class="upload-box">
+            <h2>Upload Trade CSV</h2>
+            <p>Export your trades from the dashboard and upload here</p>
+
+            <label class="file-label" for="file-input">
+                Choose CSV File
+            </label>
+            <input type="file" id="file-input" name="file" accept=".csv">
+
+            <div class="selected-file" id="selected-file"></div>
+
+            <button type="submit" id="submit-btn">Analyze Trades</button>
+        </form>
+
+        <div class="info-box">
+            <h3>What this tool does:</h3>
+            <ul>
+                <li>Filters out unprofitable trades (91c+ entries that lose money even on wins)</li>
+                <li>Simulates different betting strategies: Flat, Martingale, Mart after 3 losses</li>
+                <li>Shows what happens with different bet sizes and bankroll percentages</li>
+                <li>Projects weekly, monthly, yearly returns</li>
+                <li>Lets you download cleaned CSVs with bad trades removed</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const selectedFile = document.getElementById('selected-file');
+        const submitBtn = document.getElementById('submit-btn');
+
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                selectedFile.textContent = this.files[0].name;
+                submitBtn.classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>

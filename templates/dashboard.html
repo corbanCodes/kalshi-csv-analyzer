@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Kalshi Analyzer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 24px;
+            color: #fff;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        h1 { font-size: 24px; }
+        .header-links a {
+            color: #888;
+            text-decoration: none;
+            margin-left: 24px;
+        }
+        .header-links a:hover { color: #fff; }
+
+        /* Settings Panel */
+        .settings-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .settings-panel h3 {
+            margin-bottom: 16px;
+            color: #4ade80;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .setting-group label {
+            display: block;
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        .setting-group input, .setting-group select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+        }
+        .setting-group input:focus, .setting-group select:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+        .apply-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            border: none;
+            border-radius: 6px;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        /* Stats Overview */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .stat-value.green { color: #4ade80; }
+        .stat-value.red { color: #ef4444; }
+        .stat-value.blue { color: #3b82f6; }
+        .stat-label {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        /* Strategy Comparison */
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .section h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .strategy-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+        .strategy-card:hover {
+            border-color: rgba(74, 222, 128, 0.3);
+        }
+        .strategy-card h3 {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .strategy-profit {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .strategy-profit.positive { color: #4ade80; }
+        .strategy-profit.negative { color: #ef4444; }
+        .strategy-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 16px;
+            font-size: 13px;
+        }
+        .strategy-stats span {
+            color: #888;
+        }
+        .strategy-stats strong {
+            color: #fff;
+        }
+        .busted-badge {
+            background: #ef4444;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        /* Bot Table */
+        .bot-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .bot-table th {
+            text-align: left;
+            padding: 12px;
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .bot-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .bot-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .bot-link {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        .bot-link:hover {
+            text-decoration: underline;
+        }
+        .profit-cell.positive { color: #4ade80; }
+        .profit-cell.negative { color: #ef4444; }
+        .roi-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .roi-badge.positive {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+        .roi-badge.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        /* Download buttons */
+        .download-bar {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .download-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .download-btn:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Trade Analysis: {{ filename }}</h1>
+            <div class="header-links">
+                <a href="/projections?{{ request.query_string.decode() }}">Projections</a>
+                <a href="/">Upload New</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </header>
+
+        <!-- Settings Panel -->
+        <form class="settings-panel" method="GET">
+            <h3>Simulation Settings</h3>
+            <div class="settings-grid">
+                <div class="setting-group">
+                    <label>Max Entry Price (cents)</label>
+                    <input type="number" name="max_entry" value="{{ settings.max_entry_price }}" min="50" max="99">
+                </div>
+                <div class="setting-group">
+                    <label>Base Bet Size ($)</label>
+                    <input type="number" name="base_bet" value="{{ settings.base_bet }}" min="1" step="1">
+                </div>
+                <div class="setting-group">
+                    <label>Starting Bankroll ($)</label>
+                    <input type="number" name="bankroll" value="{{ settings.starting_bankroll }}" min="100" step="100">
+                </div>
+                <div class="setting-group">
+                    <label>Bankroll % (optional)</label>
+                    <input type="number" name="bankroll_pct" value="{{ settings.bankroll_pct or '' }}" min="1" max="100" placeholder="Leave empty for fixed bet">
+                </div>
+                <div class="setting-group">
+                    <label>Martingale After X Losses</label>
+                    <input type="number" name="mart_after" value="{{ settings.mart_start_after }}" min="1" max="10">
+                </div>
+                <div class="setting-group">
+                    <label>Max Multiplier</label>
+                    <input type="number" name="max_mult" value="{{ settings.max_multiplier }}" min="2" max="256">
+                </div>
+                <div class="setting-group">
+                    <label>View Strategy</label>
+                    <select name="strategy">
+                        <option value="flat" {% if settings.strategy == 'flat' %}selected{% endif %}>Flat Betting</option>
+                        <option value="mart1" {% if settings.strategy == 'mart1' %}selected{% endif %}>Martingale (Every Loss)</option>
+                        <option value="mart3" {% if settings.strategy == 'mart3' %}selected{% endif %}>Martingale (After 3)</option>
+                        <option value="mart_custom" {% if settings.strategy == 'mart_custom' %}selected{% endif %}>Custom Martingale</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="apply-btn">Apply Settings</button>
+        </form>
+
+        <!-- Stats Overview -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value blue">{{ total_trades }}</div>
+                <div class="stat-label">Total Trades</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value green">{{ filtered_trades }}</div>
+                <div class="stat-label">After Filter</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value red">{{ removed_trades }}</div>
+                <div class="stat-label">Removed (>{{ settings.max_entry_price }}c)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${{ "{:,.0f}".format(settings.starting_bankroll) }}</div>
+                <div class="stat-label">Starting Bankroll</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${{ "{:,.0f}".format(settings.base_bet) }}</div>
+                <div class="stat-label">Base Bet</div>
+            </div>
+        </div>
+
+        <!-- Strategy Comparison -->
+        <div class="section">
+            <h2>Strategy Comparison (All Trades Combined)</h2>
+            <div class="strategy-grid">
+                {% for key, strat in all_strategies.items() %}
+                <div class="strategy-card">
+                    <h3>{{ strat.name }}</h3>
+                    <div class="strategy-profit {{ 'positive' if strat.total_profit > 0 else 'negative' }}">
+                        ${{ "{:,.2f}".format(strat.total_profit) }}
+                    </div>
+                    {% if strat.busted %}
+                    <span class="busted-badge">BUSTED</span>
+                    {% endif %}
+                    <div class="strategy-stats">
+                        <div><span>Win Rate:</span> <strong>{{ "{:.1f}".format(strat.wins / strat.num_trades * 100 if strat.num_trades > 0 else 0) }}%</strong></div>
+                        <div><span>ROI:</span> <strong>{{ "{:.2f}".format(strat.roi) }}%</strong></div>
+                        <div><span>Final:</span> <strong>${{ "{:,.0f}".format(strat.final_bankroll) }}</strong></div>
+                        <div><span>Max DD:</span> <strong>{{ "{:.1f}".format(strat.max_drawdown) }}%</strong></div>
+                        <div><span>Wagered:</span> <strong>${{ "{:,.0f}".format(strat.total_wagered) }}</strong></div>
+                        <div><span>Trades:</span> <strong>{{ strat.num_trades }}</strong></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Per-Bot Results -->
+        <div class="section">
+            <h2>Per-Bot Results ({{ settings.strategy | replace('_', ' ') | title }})</h2>
+            <div style="overflow-x: auto;">
+                <table class="bot-table">
+                    <thead>
+                        <tr>
+                            <th>Bot ID</th>
+                            <th>Trades</th>
+                            <th>Win Rate</th>
+                            <th>Profit</th>
+                            <th>ROI</th>
+                            <th>Final Bankroll</th>
+                            <th>Max Drawdown</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bot_id, result in bot_results %}
+                        <tr>
+                            <td>
+                                <a href="/bot/{{ bot_id }}?{{ request.query_string.decode() }}" class="bot-link">
+                                    {{ bot_id }}
+                                </a>
+                            </td>
+                            <td>{{ result.num_trades }}</td>
+                            <td>{{ "{:.1f}".format(result.wins / result.num_trades * 100 if result.num_trades > 0 else 0) }}%</td>
+                            <td class="profit-cell {{ 'positive' if result.total_profit > 0 else 'negative' }}">
+                                ${{ "{:,.2f}".format(result.total_profit) }}
+                            </td>
+                            <td>
+                                <span class="roi-badge {{ 'positive' if result.roi > 0 else 'negative' }}">
+                                    {{ "{:.2f}".format(result.roi) }}%
+                                </span>
+                            </td>
+                            <td>${{ "{:,.0f}".format(result.final_bankroll) }}</td>
+                            <td>{{ "{:.1f}".format(result.max_drawdown) }}%</td>
+                            <td>
+                                <a href="/download/bot/{{ bot_id }}?max_entry={{ settings.max_entry_price }}" class="download-btn">CSV</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="download-bar">
+                <a href="/download/all?max_entry={{ settings.max_entry_price }}" class="download-btn">
+                    Download All Filtered Trades (CSV)
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
